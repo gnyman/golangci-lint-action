@@ -55,10 +55,11 @@ async function fetchPatch(): Promise<string> {
       return `` // don't fail the action, but analyze without patch
     }
     
-    core.info(pathResp)
+    
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     patch = patchResp.data as any
+    core.info(patch)
   } catch (err) {
     console.warn(`failed to fetch pull request patch:`, err)
     return `` // don't fail the action, but analyze without patch
