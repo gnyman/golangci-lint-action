@@ -54,6 +54,8 @@ async function fetchPatch(): Promise<string> {
       core.warning(`failed to fetch pull request patch: response status is ${patchResp.status}`)
       return `` // don't fail the action, but analyze without patch
     }
+    
+    core.info(pathResp)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     patch = patchResp.data as any
