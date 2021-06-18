@@ -64,7 +64,7 @@ async function fetchPatch(): Promise<string> {
     console.warn(`failed to fetch pull request patch:`, err)
     return `` // don't fail the action, but analyze without patch
   }
-
+  core.info(`testing testing... does this work... hellooo`)
   try {
     const tempDir = await createTempDir()
     const patchPath = path.join(tempDir, "pull.patch")
