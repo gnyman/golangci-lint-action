@@ -144,6 +144,12 @@ async function runLint(lintPath: string, patchPath: string): Promise<void> {
     addedArgs.push(`--new=false`)
     addedArgs.push(`--new-from-rev=`)
   }
+  
+  const onlyNewIssues = core.getInput(`only-new-issues`, { required: true }).trim()
+  if (onlyNewIssues === `true` && !pathPath) {
+    core.warning(`No patch to analyse with only-new-issues, not doing anything instead of re-analysing the whole thing`)
+    return ``
+  }
 
   const workingDirectory = core.getInput(`working-directory`)
   const cmdArgs: ExecOptions = {}
