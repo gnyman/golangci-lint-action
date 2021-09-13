@@ -149,7 +149,7 @@ async function runLint(lintPath: string, patchPath: string): Promise<void> {
   }
   
   const onlyNewIssues = core.getInput(`only-new-issues`, { required: true }).trim()
-  if (onlyNewIssues === `true` && !pathPath) {
+  if (onlyNewIssues === `true` && !patchPath) {
     core.warning(`No patch to analyse with only-new-issues, not doing anything instead of re-analysing the whole thing`)
     return ``
   }
