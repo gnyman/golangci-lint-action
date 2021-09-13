@@ -134,6 +134,12 @@ async function runLint(lintPath: string, patchPath: string): Promise<void> {
   }
   addedArgs.push(`--out-format=github-actions`)
 
+  const onlyNewIssues = core.getInput(`only-new-issues`, { required: true }).trim()
+  if (onlyNewIssues === `true` && !patchPath) {
+    core.warning(`Only-new-issues is true, but there is nothing new (no patch) to analyse. Exiting.`)
+    return 
+  }
+
   if (patchPath) {
     if (userArgNames.has(`new`) || userArgNames.has(`new-from-rev`) || userArgNames.has(`new-from-patch`)) {
       throw new Error(`please, don't specify manually --new* args when requesting only new issues`)
