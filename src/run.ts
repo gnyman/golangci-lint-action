@@ -84,17 +84,24 @@ type Env = {
 
 async function prepareEnv(): Promise<Env> {
   const startedAt = Date.now()
+  const patchPromise = fetchPatch()
+  const patchPath = await patchPromise
+
+  const onlyNewIssues = core.getInput(`only-new-issues`, { required: true }).trim()
+  if (onlyNewIssues === `true` && !patchPath) {
+    core.warning(`FOOBOO: No patch to analyse with only-new-issues, not doing anything instead of re-analysing the whole thing`)
+    throw new Error(`exit early test 123`)
+  }  
 
   // Prepare cache, lint and go in parallel.
   const restoreCachePromise = restoreCache()
   const prepareLintPromise = prepareLint()
   const installGoPromise = installGo()
-  const patchPromise = fetchPatch()
+  
 
   const lintPath = await prepareLintPromise
   await installGoPromise
   await restoreCachePromise
-  const patchPath = await patchPromise
 
   core.info(`Prepared env in ${Date.now() - startedAt}ms`)
   return { lintPath, patchPath }
@@ -147,12 +154,7 @@ async function runLint(lintPath: string, patchPath: string): Promise<void> {
     addedArgs.push(`--new=false`)
     addedArgs.push(`--new-from-rev=`)
   }
-  
-  const onlyNewIssues = core.getInput(`only-new-issues`, { required: true }).trim()
-  if (onlyNewIssues === `true` && !patchPath) {
-    core.warning(`No patch to analyse with only-new-issues, not doing anything instead of re-analysing the whole thing`)
-    return ``
-  }
+  core.info("FOOBUG: onlyNewIssues is : ${onlyNewIssues} and patchPath: ${patchPath}");
 
   const workingDirectory = core.getInput(`working-directory`)
   const cmdArgs: ExecOptions = {}
