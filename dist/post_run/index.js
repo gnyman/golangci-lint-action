@@ -6839,36 +6839,56 @@ function fetchPatch() {
             return ``;
         }
         const ctx = github.context;
-        if (ctx.eventName !== `pull_request`) {
-            core.info(`Not fetching patch for showing only new issues because it's not a pull request context: event name is ${ctx.eventName}`);
-            return ``;
-        }
-        const pull = ctx.payload.pull_request;
-        if (!pull) {
-            core.warning(`No pull request in context`);
-            return ``;
-        }
         const octokit = github.getOctokit(core.getInput(`github-token`, { required: true }));
         let patch;
-        try {
-            const patchResp = yield octokit.pulls.get({
-                owner: ctx.repo.owner,
-                repo: ctx.repo.repo,
-                [`pull_number`]: pull.number,
-                mediaType: {
-                    format: `diff`,
-                },
-            });
-            if (patchResp.status !== 200) {
-                core.warning(`failed to fetch pull request patch: response status is ${patchResp.status}`);
+        if (ctx.eventName == `pull_request`) {
+            const pull = ctx.payload.pull_request;
+            if (!pull) {
+                core.warning(`No pull request in context`);
+                return ``;
+            }
+            try {
+                const patchResp = yield octokit.pulls.get({
+                    owner: ctx.repo.owner,
+                    repo: ctx.repo.repo,
+                    [`pull_number`]: pull.number,
+                    mediaType: {
+                        format: `diff`,
+                    },
+                });
+                if (patchResp.status !== 200) {
+                    core.warning(`failed to fetch pull request patch: response status is ${patchResp.status}`);
+                    return ``; // don't fail the action, but analyze without patch
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                patch = patchResp.data;
+            }
+            catch (err) {
+                console.warn(`failed to fetch pull request patch:`, err);
                 return ``; // don't fail the action, but analyze without patch
             }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            patch = patchResp.data;
         }
-        catch (err) {
-            console.warn(`failed to fetch pull request patch:`, err);
-            return ``; // don't fail the action, but analyze without patch
+        else {
+            try {
+                const patchResp = yield octokit.repos.getCommit({
+                    owner: ctx.repo.owner,
+                    repo: ctx.repo.repo,
+                    mediaType: {
+                        format: `diff`,
+                    },
+                    ref: ctx.sha,
+                });
+                if (patchResp.status !== 200) {
+                    core.warning(`failed to fetch pull request patch: response status is ${patchResp.status}`);
+                    return ``; // don't fail the action, but analyze without patch
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                patch = patchResp.data;
+            }
+            catch (err) {
+                console.warn(`failed to fetch pull request patch:`, err);
+                return ``; // don't fail the action, but analyze without patch
+            }
         }
         try {
             const tempDir = yield createTempDir();
@@ -6892,9 +6912,12 @@ function prepareEnv() {
         // because it will always be empty if onlyNewIssues is false
         // but that might change, so we make sure to only run check the patch
         // if onlyNewIssues is set
+        core.info("Hellu ");
         const onlyNewIssues = core.getInput(`only-new-issues`, { required: true }).trim();
         if (onlyNewIssues === `true`) {
+            core.info("Yep it's true");
             if (patchPath) {
+                core.info("No patch file");
                 core.warning("Got patch %{patchPath} with content:");
                 fs.readFile(patchPath, 'utf8', (err, data) => {
                     if (err) {
