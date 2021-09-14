@@ -6869,6 +6869,7 @@ function fetchPatch() {
             }
         }
         else {
+            core.info("Fetching change from SHA");
             try {
                 const patchResp = yield octokit.repos.getCommit({
                     owner: ctx.repo.owner,
@@ -6912,19 +6913,14 @@ function prepareEnv() {
         // because it will always be empty if onlyNewIssues is false
         // but that might change, so we make sure to only run check the patch
         // if onlyNewIssues is set
-        core.info("Hellu ");
         const onlyNewIssues = core.getInput(`only-new-issues`, { required: true }).trim();
         if (onlyNewIssues === `true`) {
-            core.info("Yep it's true");
             if (patchPath) {
-                core.info("No patch file");
-                core.warning("Got patch %{patchPath} with content:");
                 fs.readFile(patchPath, 'utf8', (err, data) => {
                     if (err) {
                         core.error(err);
                         process.exit(0);
                     }
-                    core.warning(data);
                     // check if any .go files has been modified
                     if (data.match(/^(?:---|\+\+\+).*\.go$/gm) == null) {
                         // if not there can't be "new" issues
