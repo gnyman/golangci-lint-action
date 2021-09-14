@@ -82,16 +82,42 @@ type Env = {
 async function prepareEnv(): Promise<Env> {
   const startedAt = Date.now()
 
+  const patchPromise = fetchPatch()
+  const patchPath = await patchPromise
+
+  // we could also just check patchPath to see if it's empty
+  // because it will always be empty if onlyNewIssues is false
+  // but that might change, so we make sure to only run check the patch
+  // if onlyNewIssues is set
+  const onlyNewIssues = core.getInput(`only-new-issues`, { required: true }).trim()
+  if (onlyNewIssues === `true`) {
+    if (patchPath) {
+      core.warning("Got patch %{patchPath} with content:");
+      fs.readFile(patchPath,'utf8', (err,data) => {
+        if(err) {
+          core.error(err)
+          process.exit(0)
+        }
+        core.warning(data)
+        // check if any .go files has been modified
+        if (data.match(/^(?:---|\+\+\+).*\.go$/gm) == null) {
+          // if not there can't be "new" issues
+          core.info("only-new-issues is true, but no .go files have been mofified so exiting early")
+          process.exit(0)
+        }
+      })
+    }
+  }
+
   // Prepare cache, lint and go in parallel.
   const restoreCachePromise = restoreCache()
   const prepareLintPromise = prepareLint()
   const installGoPromise = installGo()
-  const patchPromise = fetchPatch()
+  
 
   const lintPath = await prepareLintPromise
   await installGoPromise
   await restoreCachePromise
-  const patchPath = await patchPromise
 
   core.info(`Prepared env in ${Date.now() - startedAt}ms`)
   return { lintPath, patchPath }
