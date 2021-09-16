@@ -6932,7 +6932,7 @@ function prepareEnv() {
                         process.exit(0);
                     }
                     // check if any .go files has been modified
-                    if (data.match(/^(?:---|\+\+\+).*\.go$/gm) == null) {
+                    if (data.match(/^(?:---|\+\+\+)(?:.*\.go)|(?:go\.mod)|(?:go\.sum)$/gm) == null) {
                         // if not there can't be "new" issues
                         core.info("only-new-issues is true, but no .go files have been mofified so exiting early");
                         process.exit(0);
